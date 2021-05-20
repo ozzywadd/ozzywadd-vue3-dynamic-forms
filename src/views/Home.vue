@@ -1,18 +1,67 @@
 <template>
-  <div class="home">
-    <img alt="Vue logo" src="../assets/logo.png" />
-    <HelloWorld msg="Welcome to Your Vue.js + TypeScript App" />
+  <div class="m-8 border p-8">
+    <DynamicForm :schema="formSchema" v-model="formData" @submit="onSubmit" />
+  </div>
+
+  <div class="m-8 border p-8">
+    {{ formData }}
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent } from "vue";
-import HelloWorld from "@/components/HelloWorld.vue"; // @ is an alias to /src
+import { defineComponent, ref } from "vue";
+import { FormSchema } from "@/types/types";
+import DynamicForm from "@/components/Forms/DymanicForm.vue";
+import * as yup from "yup";
 
 export default defineComponent({
   name: "Home",
   components: {
-    HelloWorld,
+    DynamicForm,
+  },
+  setup() {
+    const formData = ref({});
+    const formSchema: FormSchema = {
+      fields: [
+        {
+          label: "Your Name",
+          name: "name",
+          component: "TextInput",
+        },
+        {
+          label: "Age",
+          name: "age",
+          component: "TextInput",
+        },
+        {
+          label: "Your Email",
+          name: "email",
+          component: "TextInput",
+          required: true,
+        },
+        {
+          label: "Your Password",
+          name: "password",
+          component: "TextInput",
+          required: true,
+        },
+      ],
+      values: {
+        name: "Austin",
+      },
+      validation: yup.object({
+        name: yup.string(),
+        age: yup.number(),
+        email: yup.string().email().required(),
+        password: yup.string().min(8).required(),
+      }),
+    };
+
+    function onSubmit() {
+      console.log(formData.value);
+    }
+
+    return { formSchema, formData, onSubmit };
   },
 });
 </script>

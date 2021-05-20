@@ -1,5 +1,10 @@
 import { createApp } from "vue";
 import App from "./App.vue";
 import router from "./router";
+import "tailwindcss/tailwind.css"
+import { RegisterInputs } from "@/components/Forms/inputs/RegisterInputs"
 
-createApp(App).use(router).mount("#app");
+const app = createApp(App).use(router);
+
+RegisterInputs(app);
+app.mount("#app")
