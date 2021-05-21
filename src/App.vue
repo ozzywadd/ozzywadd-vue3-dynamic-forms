@@ -1,7 +1,9 @@
 <template>
-  <!-- <div id="nav">
-    <router-link to="/">Home</router-link> |
-    <router-link to="/about">About</router-link>
-  </div> -->
   <router-view />
 </template>
+
+<style lang="postcss">
+.router-link-active {
+  @apply text-blue-500 font-bold;
+}
+</style>
