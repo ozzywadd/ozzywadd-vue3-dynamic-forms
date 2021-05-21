@@ -4,13 +4,7 @@ interface FieldSchema {
     name: string;
     label: string;
     required?: boolean;
+    validation?: any;
 }
 
-// The form schema shape
-interface FormSchema {
-    fields: FieldSchema[],
-    validation: any;
-    values: { [k: string]: any };
-}
-
-export { FieldSchema, FormSchema }
+export { FieldSchema }

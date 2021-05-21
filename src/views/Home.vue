@@ -36,11 +36,15 @@
 import { defineComponent, ref } from "vue";
 import { useForm, useFormValues, useIsFormValid } from "vee-validate";
 import * as yup from "yup";
+import { FieldSchema } from "../types/types";
+import { object, string } from "yup/lib/locale";
 
 export default defineComponent({
   name: "Home",
   components: {},
   setup() {
+    const today = new Date().toDateString();
+
     const formFields = ref([
       {
         name: "name",
@@ -59,31 +63,34 @@ export default defineComponent({
         type: "date",
         label: "Date of Birth",
         component: "TextInput",
+        validation: yup.date().max(today),
       },
       {
         name: "email",
         type: "text",
         label: "Email",
         component: "TextInput",
+        validation: yup.string().email().required(),
       },
       {
         name: "password",
         type: "password",
         label: "Password",
         component: "TextInput",
+        validation: yup.string().min(8).required(),
       },
     ]);
 
-    const today = new Date().toDateString();
-
-    const formSchema = yup.object({
-      dob: yup.date().max(today),
-      email: yup.string().email().required(),
-      password: yup.string().min(8).required(),
-    });
+    const getValidationSchema = (): any => {
+      let validationSchema: any = {};
+      formFields.value.forEach((field: FieldSchema) => {
+        if (field.validation) validationSchema[field.name] = field.validation;
+      });
+      return validationSchema;
+    };
 
     const theForm = useForm({
-      validationSchema: formSchema,
+      validationSchema: getValidationSchema(),
       validateOnMount: true,
     });
 
