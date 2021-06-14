@@ -3,93 +3,138 @@
     v-for="field in schema"
     :key="field.name"
   >
-    <label v-if="!field.hidden">
-      {{ field.label }} <span v-if="field.required">*</span>
-      <component
-        :is="field.component"
-        :type="field.type"
+    <label
+      v-if="!field.hidden"
+      class="block mb-2"
+      :for="field.name"
+    >
+      {{ field.label }}
+      <span
+        v-if="field.required"
+        class="text-red-500"
+      >*</span>
+      
+      <input
+        v-model="form.values[field.name]"
+        class="block rounded p-2 mb-4 w-full"
+        :class="form.errors[field.name] ? 'bg-red-100' : ''"
         :name="field.name"
-        :value="field.value"
-        :readonly="field.readonly"
-      />
+        :type="field.type"
+        @change="validateField(field.name)"
+        @input="validateField(field.name)"
+        @blur="validateField(field.name)"
+      >
     </label>
+    <span
+      v-if="form.errors[field.name]"
+      class="block -mt-2 text-red-500 mb-2"
+    >
+      {{ form.errors[field.name] }}
+    </span>
   </div>
+
   <button
-    class="text-white rounded p-2 w-full mt-4"
-    :class="
-      valid ? 'bg-blue-500 cursor-pointer' : 'bg-blue-300 cursor-not-allowed'
-    "
-    :disabled="!valid"
-    @click="onSubmit"
+    class="bg-blue-500 text-white px-4 py-2 rounded w-full mt-4"
+    :class="!form.valid ? 'opacity-25' : ''"
+    :disabled="!form.valid"
+    @click="submitForm"
   >
     Submit
   </button>
-
-  <div class="m-8 w-full mx-auto">
-    DynamicForm Errors: {{ errors }}
-  </div>
-  <div class="m-8 w-full mx-auto">
-    DynamicForm Valid: {{ valid }}
-  </div>
-  <div class="m-8 w-full mx-auto">
-    DynamicForm validationSchema: {{ validationSchema }}
-  </div>
 </template>
 
 <script lang="ts">
-import { defineComponent, watch, ref } from "vue";
-import { useForm, useFormErrors, useFormValues, useIsFormValid } from "vee-validate";
-import { FieldSchema } from "@/types/types";
+import { defineComponent, ref } from "vue";
+import * as yup from "yup";
 
 export default defineComponent({
-  name: "Single",
-  components: {},
+  name: "DynamicForm",
   props: {
     schema: {
-      type: Object,
+      type: Array,
       required: true
-    }, 
+    },
   },
-  emits: ["onSubmit", "onValueChange"],
   setup(props, context) {
 
-    let validationSchema = ref();
+    const form = ref({
+      valid: false,
+      values: {},
+      errors: {}
+    })
 
-    const getValidationSchema = (): any => {
-      let newValidationSchema = {};
-      props.schema.forEach((field: FieldSchema) => {
-        if (field.logic) field.logic(dynamicForm);
-        if (field.validation && !field.hidden) newValidationSchema[field.name] = field.validation;
-      });
+    const validationSchema = ref({});
 
-      validationSchema.value = newValidationSchema;
-    };
+    // Construct validation schema
+    const getValidationSchema = () => {
 
-    const dynamicForm = useForm({
-      validationSchema: validationSchema,      
-    });
+      validationSchema.value = {};
 
-    const onSubmit = () => {
-      dynamicForm.validate().then((res) => {
-        if (res.valid) {
-          context.emit("onSubmit", values.value);
-          dynamicForm.resetForm();
-        } else {
-          console.log("Form submission failure", res)
+      props.schema.forEach((field: any) => {
+        if (field.logic) field.logic(form.value);
+        if (!field.hidden) {
+          validationSchema.value[field.name] = field.validation;
         }
       });
-    };
 
-    const values = useFormValues();
-    const errors = useFormErrors();
-    const valid = useIsFormValid();
+      return yup.object().shape(validationSchema.value);
+    }
 
-    watch(values.value, (newValues: Record<string, unknown>) => {
-      context.emit("onValueChange", newValues);
-      getValidationSchema();  
-    });
+    // Validate Field - Triggered on input events
+    const validateField = (field: string) => {
 
-    return { onSubmit, values, errors, valid, validationSchema };
+      getValidationSchema()
+        .validateAt(field, form.value.values)
+        .then(() => {
+          delete form.value.errors[field];
+        })
+        .catch((err: any) => {
+          form.value.errors[field] = err.message;
+        });
+
+      isFormValid();
+    }
+
+    // Validate Form - Triggered on submit events
+    const validateForm = () => {
+      getValidationSchema().validate(form.value.values, { abortEarly: false })
+        .then(() => {
+          form.value.errors = {};
+          console.log("Form Valid!");
+        })
+        .catch((err: any) => {
+          err.inner.forEach((error: any) => {
+            form.value.errors[error.path] = error.message;
+          });
+          console.log("Form Errors!");
+        });
+    }
+
+    // Check Validation - Used for submit button status
+    const isFormValid = () => {
+      getValidationSchema().validate(form.value.values, { abortEarly: true })
+        .then(() => {
+          form.value.valid = true;
+        })
+        .catch((err: any) => {
+          form.value.valid = false;
+        });
+    }
+
+    // Check initial validation status
+    isFormValid();
+
+    props.schema.forEach((field: any) => {
+      form.value.values[field.name] = field.value;
+    })
+
+    // Submit form event
+    const submitForm = () => {
+      console.log("Form Submitted", form)
+      validateForm();
+    }
+
+    return { form, validateField, submitForm };
   },
 });
 </script>
