@@ -1,7 +1,7 @@
 import { App } from "vue";
 
 // import components
-import TextInput from "@/components/Forms/inputs/TextInput.vue";
+import TextInput from "@/components/inputs/TextInput.vue";
 
 // register components
 export const RegisterInputs = (app: App): void => {

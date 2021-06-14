@@ -1,6 +1,9 @@
 <template>
-  <div class="m-8 border p-8">
-    <div v-for="field in formFields" :key="field.name">
+  <div class="m-8 border p-8 w-2/3 mx-auto">
+    <div
+      v-for="field in formFields"
+      :key="field.name"
+    >
       <label>
         {{ field.label }}
         <component
@@ -21,15 +24,20 @@
     >
       Submit
     </button>
-    <button class="bg-gray-200 rounded p-2 w-full mt-4" @click="onReset">
+    <button
+      class="bg-gray-200 rounded p-2 w-full mt-4"
+      @click="onReset"
+    >
       Reset Form
     </button>
   </div>
 
-  <div class="m-8 border p-8">
+  <div class="m-8 border p-8 w-2/3 mx-auto">
     {{ values }}
   </div>
-  <div class="m-8 border p-8">valid: {{ valid }}</div>
+  <div class="m-8 border p-8 w-2/3 mx-auto">
+    valid: {{ valid }}
+  </div>
 </template>
 
 <script lang="ts">
@@ -37,7 +45,6 @@ import { defineComponent, ref } from "vue";
 import { useForm, useFormValues, useIsFormValid } from "vee-validate";
 import * as yup from "yup";
 import { FieldSchema } from "../types/types";
-import { object, string } from "yup/lib/locale";
 
 export default defineComponent({
   name: "Home",
@@ -57,6 +64,8 @@ export default defineComponent({
         type: "number",
         label: "Age",
         component: "TextInput",
+        required: true,
+        validation: yup.number().required(),
       },
       {
         name: "dob",
