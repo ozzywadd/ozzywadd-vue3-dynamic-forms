@@ -1,57 +1,33 @@
 <template>
   <div class="m-8 w-2/3 mx-auto bg-gray-100 p-4">
-    <label class="block mb-2">Email</label>
-    <input
-      v-model="form.values.email"
-      name="email"
-      type="email"
-      class="block rounded p-2 mb-4 w-full"
-      :class="form.errors.email ? 'bg-red-100' : ''"
-      @blur="validateField('email')"
-      @input="validateField('email')"
+    <div
+      v-for="field in formSchema"
+      :key="field.name"
     >
-    <span
-      v-if="form.errors.email"
-      class="block -mt-2 text-red-500 mb-2"
-    >{{ form.errors.email }}</span>
+      <label
+        class="block mb-2"
+        :for="field.name"
+      >
+        {{ field.name }}
+      </label>
+      <input
+        v-model="form.values[field.name]"
+        class="block rounded p-2 mb-4 w-full"
+        :class="form.errors[field.name] ? 'bg-red-100' : ''"
+        :name="field.name"
+        :type="field.type"
+        @input="validateField(field.name)"
+        @blur="validateField(field.name)"
+      >
+      <span
+        v-if="form.errors[field.name]"
+        class="block -mt-2 text-red-500 mb-2"
+      >
+        {{ form.errors[field.name] }}
+      </span>
+    </div>
 
-    <label class="block mb-2">Password</label>
-    <input
-      v-model="form.values.password"
-      name="password"
-      type="password"
-      class="block rounded p-2 mb-4 w-full"
-      :class="form.errors.password ? 'bg-red-100' : ''"
-      @blur="validateField('password')"
-      @input="validateField('password')"
-    >
-    <span
-      v-if="form.errors.password"
-      class="block -mt-2 text-red-500 mb-2"
-    >{{ form.errors.password }}</span>
 
-    <label class="block mb-2">Confirm Password</label>
-    <input
-      v-model="form.values.confirm_password"
-      name="confirm_password"
-      type="password"
-      class="block rounded p-2 mb-4 w-full"
-      :class="form.errors.confirm_password ? 'bg-red-100' : ''"
-      @blur="validateField('confirm_password')"
-      @keypress="validateField('confirm_password')"
-    >
-    <span
-      v-if="form.errors.confirm_password"
-      class="block -mt-2 text-red-500 mb-2"
-    >{{ form.errors.confirm_password }}</span>
-
-    <!--NEW-->
-    <!-- <button
-      class="bg-blue-500 text-white px-4 py-2 rounded w-full mt-4"
-      @click="submitForm"
-    >
-      Submit
-    </button> -->
     <button
       class="bg-blue-500 text-white px-4 py-2 rounded w-full mt-4"
       :class="!form.valid ? 'opacity-25' : ''"
@@ -62,6 +38,12 @@
     </button>
   </div>
 
+  <div class="mb-4 w-2/3 mx-auto bg-gray-100 p-4">
+    formSchema: {{ formSchema }}
+  </div>
+  <div class="mb-4 w-2/3 mx-auto bg-gray-100 p-4">
+    validationSchema: {{ validationSchema }}
+  </div>
   <div
     class="mb-4 w-2/3 mx-auto bg-gray-100 p-4"
     :class="form.valid ? 'bg-green-100' : 'bg-red-100'"
@@ -77,7 +59,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, reactive, Ref } from "vue";
+import { defineComponent, reactive, ref } from "vue";
 import * as yup from "yup";
 
 export default defineComponent({
@@ -102,44 +84,76 @@ export default defineComponent({
       }
     }
 
+    // OLD
+    const formSchema = ref([
+        {
+          name: "email",
+          type: "email",
+          validation: yup.string().email().required()
+        },
+        {
+          name: "password",
+          type: "password",
+          validation: yup.string().ensure().required().min(6)
+        },
+        {
+          name: "confirm_password",
+          type: "password",
+          hidden: true,
+          validation: yup.string().ensure().when("password", {
+            is: (password: any) => password,
+            then: yup.string().required().oneOf([yup.ref("password")], `confirm password must match the password`),
+            // then: yup.string().required().oneOf([form.values.password], `confirm password must match the password`),
+          })
+        }
+    ]);
+
     // NEW
-    // const formSchema = [
-    //     {
-    //       name: "email",
-    //       hidden: true,
-    //       validation: yup.string()
-    //     }
-    // ]
-
-
-    // NEW
-    // const getValidationSchema = () => {
-
-    //   let validationSchema = {};
-
-    //   formSchema.forEach((field: any) => {
-    //     if (!field.hidden) {
-    //       // add to validationSchema
-    //       validationSchema[field.name] = field.validation;
-    //     }
-    //   });
-
-    //   return validationSchema;
-    // }
-
-    // NEW
-    //const schema: Ref<Record<string, unknown>> = yup.object().shape(getValidationSchema());
-
-    const schema: any = yup.object().shape({
-      email: yup.string().ensure().required().email(),
-      password: yup.string().ensure().required(),
-      confirm_password: yup.string().ensure().when("password", {
-        is: (password: any) => password,
-        then: yup.string().required().oneOf([yup.ref("password")], `confirm password must match the password`),
-      })
+    const formSchemaNew = reactive({
+        name: {
+          name: "email",
+          type: "email",
+          validation: yup.string().email().required()
+        },
+        password: {
+          name: "password",
+          type: "password",
+          validation: yup.string().ensure().required().min(6)
+        },
+        confirm_password: {
+          name: "confirm_password",
+          type: "password",
+          hidden: true,
+          validation: yup.string().ensure().when("password", {
+            is: (password: any) => password,
+            then: yup.string().required().oneOf([yup.ref("password")], `confirm password must match the password`),
+          })
+        }
     });
 
-    const validateField = (field: any) => {
+    const validationSchema = reactive({});
+
+    // NEW
+    const getValidationSchema = () => {
+
+      formSchema.value.forEach((field: any) => {
+        if (!field.hidden) {
+          validationSchema[field.name] = field.validation;
+        }
+      });
+
+      console.log(validationSchema);
+      return validationSchema;
+    }
+
+    // NEW
+    const schema: any = yup.object().shape(getValidationSchema());
+
+    const validateField = (field: string) => {
+      
+      console.log(form.values["password"]);
+
+      console.log("validateField", schema)
       schema
         .validateAt(field, form.values)
         .then(() => {
@@ -156,9 +170,8 @@ export default defineComponent({
     const validateForm = () => {
       schema.validate(form.values, { abortEarly: false })
         .then(() => {
-          //form.errors = {};
-          //form.valid = true;
-          console.log("Form Success")
+          form.errors = {};
+          console.log("Form Valid!")
         })
         .catch((err: any) => {
           err.inner.forEach((error: any) => {
@@ -173,7 +186,7 @@ export default defineComponent({
       validateForm();
     }
 
-    return { form, validateField, validateForm, getFormValidStatus, submitForm };
+    return { form, formSchema, validationSchema, validateField, validateForm, getFormValidStatus, submitForm };
   },
 });
 </script>
